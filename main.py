@@ -3,10 +3,12 @@
     the main entities will include: products, cart
 '''
 
-class UTILS:
+
+class Validator:
     @staticmethod
-    def is_string(input:any) -> bool:
-        return isinstance(input,str)
+    def is_non_empty_string(input:any) -> bool:
+        return isinstance(input,str) and len(input) > 0
+
     
     @staticmethod
     def is_float(input:any) -> bool:
@@ -29,10 +31,10 @@ class GenerateProducts:
 
     @classmethod
     def generate_product_object(self, user_input_name:any, user_input_price:any) -> Products:
-        if not UTILS.is_string(user_input_name):
+        if not Validator.is_non_empty_string(user_input_name):
             raise Exception('The name that was inputted was not a string.')
 
-        if not UTILS.is_float(user_input_price):
+        if not Validator.is_float(user_input_price):
             raise Exception('The price inputted was not a float.')
 
         product_name = user_input_name
