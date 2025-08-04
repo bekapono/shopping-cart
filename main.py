@@ -3,10 +3,12 @@
     the main entities will include: products, cart
 '''
 
+
 class Validator:
     @staticmethod
     def is_non_empty_string(input:any) -> bool:
         return isinstance(input,str) and len(input) > 0
+
     
     @staticmethod
     def is_float(input:any) -> bool:
