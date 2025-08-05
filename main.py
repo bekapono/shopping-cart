@@ -27,7 +27,7 @@ class Products:
     def get_price(self) -> float:
         return self.__price
 
-class GenerateProducts:
+class GenerateProductsObject:
 
     @classmethod
     def generate_product_object(self, user_input_name:any, user_input_price:any) -> Products:
@@ -41,6 +41,49 @@ class GenerateProducts:
         product_price = user_input_price
 
         return Products(product_name, product_price)
+
+class Cart:
+    def __init__(self):
+        self.__cart_id = 0
+        self.__cart = defaultdict(int)
+
+    def get_cart(self) -> "Cart": # temp solutions
+        return self.__cart
+
+    def __valid_qty(self, product:Product, qty:int) -> bool: # temp placement, planning to move to a UTIL class
+        return self.__cart[Product] >= qty
+
+    def add_to_cart(self, product:Product, qty:int):
+        self.__cart[product] += qty
+
+    def remove_from_cart(self, product:Product, qty:int):
+        if __valid_qty(product,qty):
+            raise Exception('Invalid quantity amount.')
+
+     e   self.__cart[product] -= qty
+
+class CalculateCart:
+    def __init__(self, cart:Cart):
+        self.__cart = cart
+    
+    @property
+    def calculate_total(self):
+        __total = 0 
+        for product in self.cart:
+            __total += self.cart[product]
+
+        return __total
+
+
+
+class Receipt:
+    def __init__(self, cart:Cart):
+        self.__cart = cart
+
+    def display_recipt(self):
+        for product in self.cart:
+
+
 
 # start function
 name = "Soda"
