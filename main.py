@@ -27,7 +27,7 @@ class Products:
     def get_price(self) -> float:
         return self.__price
 
-class GenerateProducts:
+class GenerateProductsObject:
 
     @classmethod
     def generate_product_object(self, user_input_name:any, user_input_price:any) -> Products:
