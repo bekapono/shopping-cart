@@ -2,6 +2,8 @@
     this python file will be a monolith for a e-commerce shopping cart
     the main entities will include: products, cart
 '''
+from collections import defaultdict
+from types import MappingProxyType
 
 
 class Validator:
@@ -47,8 +49,8 @@ class Cart:
         self.__cart_id = 0
         self.__cart = defaultdict(int)
 
-    def get_cart(self) -> "Cart": # temp solutions
-        return self.__cart
+    def get_cart(self) -> MappingProxyType: # Creates a read only view of map.
+        return MappingProxyType(self.__cart)
 
     def __valid_qty(self, product:Product, qty:int) -> bool: # temp placement, planning to move to a UTIL class
         return self.__cart[Product] >= qty
