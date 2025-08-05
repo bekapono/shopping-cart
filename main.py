@@ -59,22 +59,19 @@ class Cart:
     def remove_from_cart(self, product:Product, qty:int):
         if __valid_qty(product,qty):
             raise Exception('Invalid quantity amount.')
-
-     e   self.__cart[product] -= qty
+        self.__cart[product] -= qty
 
 class CalculateCart:
     def __init__(self, cart:Cart):
         self.__cart = cart
     
     @property
-    def calculate_total(self):
+    def total_cost(self):
         __total = 0 
         for product in self.cart:
             __total += self.cart[product]
 
         return __total
-
-
 
 class Receipt:
     def __init__(self, cart:Cart):
