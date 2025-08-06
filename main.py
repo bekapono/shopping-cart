@@ -33,7 +33,6 @@ class Products:
         return self.__price # float is immutable for python
 
 class GenerateProductsObject:
-
     @classmethod
     def generate_product_object(self, user_input_name:any, user_input_price:any) -> Products:
         if not Validator.is_non_empty_string(user_input_name):
@@ -88,6 +87,25 @@ class Receipt:
             total_cost_of_cart += total_cost_for_product
         lines.append(f"Total cost of cart: {total_cost_of_cart:.2f}")
         return lines
+
+class Order:
+    def __init__(self, cart: dict()): # have to check if cart is dict() or dict(int)
+        self.__order_id = None # place-holder UUID auto-gen
+        self.__customer_id = None # place-holder how we connect
+        self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
+        self.__datetime = None # place holder for datetime that should be set at time of init.
+        self.__fullfillment_status = None # place-holder to track current fullfillment status
+
+    def get_fullfillment_status(self) -> str:
+        return __fullfillment_status
+
+    def get_datetime(self) -> datetime:
+        return self.__datetime
+
+    def get_purchased_items(self) -> dict():
+        return MappingProxyType(self.__purchased_items)
+
+
 
 
 
