@@ -10,7 +10,6 @@ class Validator:
     @staticmethod
     def is_non_empty_string(input:any) -> bool:
         return isinstance(input,str) and len(input) > 0
-
     
     @staticmethod
     def is_float(input:any) -> bool:
@@ -80,8 +79,15 @@ class Receipt:
     def __init__(self, cart:Cart):
         self.__cart = cart
 
-    def display_recipt(self):
-        for product in self.cart:
+    def format_recipt(self) -> List[str]:
+        lines = []
+        total_cost_of_cart = 0
+        for product,qty in self.__cart:
+            total_cost_for_product = product.get_price() * qty
+            lines.append(f"{product.get_name()}: {qty} x ${product.get_price():.2f} = ${total_cost_for_product:.2f}")
+            total_cost_of_cart += total_cost_for_product
+        lines.append(f"Total cost of cart: {total_cost_of_cart:.2f}")
+        return lines
 
 
 
