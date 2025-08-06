@@ -16,6 +16,10 @@ class Validator:
     def is_float(input:any) -> bool:
         return isinstance(input,float)
 
+    @staticmethod
+    def valid_qty_to_remove(in_cart_qty:int, qty_to_remove:int) -> bool:
+        return in_cart_qty >= qty_to_remove
+
 class Products:
     def __init__(self, name:str, price:float):
         self.__id = 0 # placeholder until import uuid package
@@ -24,10 +28,10 @@ class Products:
         # for now i'll just be working with product name and price.
 
     def get_name(self) -> str:
-        return self.__name
+        return self.__name # strings is immutable for python
 
     def get_price(self) -> float:
-        return self.__price
+        return self.__price # float is immutable for python
 
 class GenerateProductsObject:
 
@@ -52,14 +56,11 @@ class Cart:
     def get_cart(self) -> MappingProxyType: # Creates a read only view of map.
         return MappingProxyType(self.__cart)
 
-    def __valid_qty(self, product:Product, qty:int) -> bool: # temp placement, planning to move to a UTIL class
-        return self.__cart[Product] >= qty
-
     def add_to_cart(self, product:Product, qty:int):
         self.__cart[product] += qty
 
     def remove_from_cart(self, product:Product, qty:int):
-        if __valid_qty(product,qty):
+        if valid_qty_to_remove(self.__cart[product], qty):
             raise Exception('Invalid quantity amount.')
         self.__cart[product] -= qty
 
