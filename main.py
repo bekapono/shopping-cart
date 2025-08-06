@@ -89,15 +89,17 @@ class Receipt:
         lines.append(f"Total cost of cart: {total_cost_of_cart:.2f}")
         return lines
 
+def main():
+    # start function
+    name = "Soda"
+    price = 12.01
 
+    item1 = GenerateProducts()
+    item1 = GenerateProducts.generate_product_object(name,price)
+    print('item1: ', item1.get_name(), item1.get_price())
 
-# start function
-name = "Soda"
-price = 12.01
+    item2 = GenerateProducts.generate_product_object(12.01, 12.01)
+    item3 = GenerateProducts.generate_product_object("Rice", "Rice")
 
-item1 = GenerateProducts()
-item1 = GenerateProducts.generate_product_object(name,price)
-print('item1: ', item1.get_name(), item1.get_price())
-
-item2 = GenerateProducts.generate_product_object(12.01, 12.01)
-item3 = GenerateProducts.generate_product_object("Rice", "Rice")
+if __name__ = __main__:
+    main()
