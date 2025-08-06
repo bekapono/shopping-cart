@@ -105,17 +105,18 @@ class Order:
     def get_purchased_items(self) -> dict():
         return MappingProxyType(self.__purchased_items)
 
+def main():
+    # start function
+    name = "Soda"
+    price = 12.01
 
 
+    item1 = GenerateProducts()
+    item1 = GenerateProducts.generate_product_object(name,price)
+    print('item1: ', item1.get_name(), item1.get_price())
 
+    item2 = GenerateProducts.generate_product_object(12.01, 12.01)
+    item3 = GenerateProducts.generate_product_object("Rice", "Rice")
 
-# start function
-name = "Soda"
-price = 12.01
-
-item1 = GenerateProducts()
-item1 = GenerateProducts.generate_product_object(name,price)
-print('item1: ', item1.get_name(), item1.get_price())
-
-item2 = GenerateProducts.generate_product_object(12.01, 12.01)
-item3 = GenerateProducts.generate_product_object("Rice", "Rice")
+if __name__ = __main__:
+    main()
