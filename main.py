@@ -4,6 +4,7 @@
 '''
 from collections import defaultdict
 from types import MappingProxyType
+from datetime import datetime
 
 
 class Validator:
@@ -33,8 +34,8 @@ class Products:
         return self.__price # float is immutable for python
 
 class GenerateProductsObject:
-    @classmethod
-    def generate_product_object(self, user_input_name:any, user_input_price:any) -> Products:
+    @staticmethod
+    def generate_product_object(user_input_name:any, user_input_price:any) -> Products:
         if not Validator.is_non_empty_string(user_input_name):
             raise Exception('The name that was inputted was not a string.')
 
@@ -88,16 +89,50 @@ class Receipt:
         lines.append(f"Total cost of cart: {total_cost_of_cart:.2f}")
         return lines
 
+class OrderStatus:
+    def can_transition_to(self, new:"OrderStatus") -> bool:
+        return NotImplementedError
+
+class PendingStatus(OrderStatus):
+    def can_transition_to(self, new):
+        return isinstance(new, (PaidStatus, CancelledStatus))
+
+class PaidStatus(OrderStatus):
+    def can_transition_to(self, new):
+        return isinstance(new, (ShippedStatus, RefundedStatus))
+
+class ShippedStatus(OrderStatus):
+    def can_transition_to(self, new):
+        return isinstance(new, DeliveredStatus)
+
+# Thinking about consolidating the below Status subclasses into one.
+class CancelledStatus(OrderStatus):
+    def can_transition_to(self, new):
+        return False
+
+class RefundedStatus(OrderStatus):
+    def can_transition_to(self, new):
+        return False
+
+class DeliveredStatus(OrderStatus):
+    def can_transition_to(self, new):
+        return False
+
 class Order:
     def __init__(self, cart: dict()): # have to check if cart is dict() or dict(int)
         self.__order_id = None # place-holder UUID auto-gen
         self.__customer_id = None # place-holder how we connect
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
-        self.__datetime = None # place holder for datetime that should be set at time of init.
-        self.__fullfillment_status = None # place-holder to track current fullfillment status
+        self.__datetime = datetime.now()
+        self.__order_status: OrderStatus = PendingStatus() 
+    
+    @property
+    def status(self) -> OrderStatus:
+        return self.__order_status
 
-    def get_fullfillment_status(self) -> str:
-        return __fullfillment_status
+    def change_order_stats(self, new_status: OrderStatus):
+        if not self.__order_status.can_transition_to(new_status):
+            raise ValueError(f"Cannot go from {self.__order_status} to {new_status}")
 
     def get_datetime(self) -> datetime:
         return self.__datetime
