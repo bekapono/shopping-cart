@@ -4,6 +4,7 @@
 '''
 from collections import defaultdict
 from types import MappingProxyType
+from datetime import datetime
 
 
 class Validator:
@@ -104,6 +105,7 @@ class ShippedStatus(OrderStatus):
     def can_transition_to(self, new):
         return isinstance(new, DeliveredStatus)
 
+# Thinking about consolidating the below Status subclasses into one.
 class CancelledStatus(OrderStatus):
     def can_transition_to(self, new):
         return False
@@ -121,11 +123,11 @@ class Order:
         self.__order_id = None # place-holder UUID auto-gen
         self.__customer_id = None # place-holder how we connect
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
-        self.__datetime = None # place holder for datetime that should be set at time of init.
-        self.__order_status: OrderStatus = PendingStatus() # place-holder to track current fullfillment status. statuses = [not_paid, paid, shipped, delivered]
+        self.__datetime = datetime.now()
+        self.__order_status: OrderStatus = PendingStatus() 
     
     @property
-    def get_order_status(self) -> OrderStatus:
+    def status(self) -> OrderStatus:
         return self.__order_status
 
     def change_order_stats(self, new_status: OrderStatus):
