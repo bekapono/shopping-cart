@@ -60,7 +60,7 @@ class Cart:
         self.__cart[product] += qty
 
     def remove_from_cart(self, product:Product, qty:int):
-        if valid_qty_to_remove(self.__cart[product], qty):
+        if Validator.valid_qty_to_remove(self.__cart[product], qty):
             raise Exception('Invalid quantity amount.')
         self.__cart[product] -= qty
 
