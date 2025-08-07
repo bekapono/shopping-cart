@@ -138,9 +138,6 @@ class Order:
             raise ValueError(f"Cannot go from {self.__order_status} to {new_status}")
         self.__order_status = new_status
 
-    def convert_order_status_to_string(self) -> str:
-        return str(self.__order_status)
-
     def get_datetime(self) -> datetime:
         return self.__datetime
 
