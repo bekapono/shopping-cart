@@ -5,8 +5,9 @@
 from collections import defaultdict
 from types import MappingProxyType
 from datetime import datetime
+import uuid 
 
-
+# -------------------- UTILITIES -------------------- #
 class Validator:
     @staticmethod
     def is_non_empty_string(input:any) -> bool:
@@ -20,6 +21,7 @@ class Validator:
     def valid_qty_to_remove(in_cart_qty:int, qty_to_remove:int) -> bool:
         return in_cart_qty >= qty_to_remove
 
+# -------------------- Product Entity -------------------- #
 class Products:
     def __init__(self, name:str, price:float):
         self.__id = 0 # placeholder until import uuid package
@@ -47,6 +49,7 @@ class GenerateProductsObject:
 
         return Products(product_name, product_price)
 
+# -------------------- CART ENTITY -------------------- #
 class Cart:
     def __init__(self):
         self.__cart_id = 0
@@ -89,50 +92,49 @@ class Receipt:
         lines.append(f"Total cost of cart: {total_cost_of_cart:.2f}")
         return lines
 
-class OrderStatus:
-    def can_transition_to(self, new:"OrderStatus") -> bool:
-        return NotImplementedError
+# -------------------- ORDER ENTITY -------------------- #
 
-class PendingStatus(OrderStatus):
-    def can_transition_to(self, new):
-        return isinstance(new, (PaidStatus, CancelledStatus))
+class OrderStatus(Enum):
+    DEFAULT = "DEFAULT" # not sure if i need this
+    PENDING_PAYMENT = "PENDING_PAYMENT"
+    PAID = "PAID"
+    SHIPPED = "SHIPPED"
+    CANCELLED = "CANCELLED" 
+    REFUNDED = "REFUNDED"
+    DELIVERED = "DELIVERED"
 
-class PaidStatus(OrderStatus):
-    def can_transition_to(self, new):
-        return isinstance(new, (ShippedStatus, RefundedStatus))
+# Havn't considered if customer is paying but cart ran out of certain products.
+class OrderStatePolicy:
+    _allowed = {
+            OrderStatus.PROCESSING_PAYMENT:     {OrderStatus.FAILED_PAYMENT, OrderStatus.PAID, OrderStatus.CANCELLED},
+            OrderStatus.FAILED_PAYMENT:         {OrderStatus.PROCESSING_PAYMENT, OrderStatus.CANCELLED},
+            OrderStatus.PAID:                   {OrderStatus.PENDING_SHIPPING, OrderStatus.REFUNDED}, 
+            OrderStatus.PENDING_SHIPPING:       {OrderStatus.SHIPPED, OrderStatus.REFUNDED},
+            OrderStatus.SHIPPED:                {OrderStatus.DELIVERED, OrderStatus.REFUNDED},
+            OrderStatus.DELIVERED:              {OrderStatus.REFUNDED},
+            OrderStatus.CANCELLED:              set(), # Theres a collection, but it's empty set. Versus None would mean we didn't define rules for this set.
+            OrderStatus.REFUNDED:               set()
+            }
 
-class ShippedStatus(OrderStatus):
-    def can_transition_to(self, new):
-        return isinstance(new, DeliveredStatus)
-
-# Thinking about consolidating the below Status subclasses into one.
-class CancelledStatus(OrderStatus):
-    def can_transition_to(self, new):
-        return False
-
-class RefundedStatus(OrderStatus):
-    def can_transition_to(self, new):
-        return False
-
-class DeliveredStatus(OrderStatus):
-    def can_transition_to(self, new):
-        return False
-
+# need to consider when a Cart is finalized and Order is created?
+# once a user clicks checkout? - once a payment is initiated? 
 class Order:
     def __init__(self, cart: dict()): # have to check if cart is dict() or dict(int)
-        self.__order_id = None # place-holder UUID auto-gen
-        self.__customer_id = None # place-holder how we connect
+        self.__order_id = uuid.uuid4()
+        self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
         self.__datetime = datetime.now()
-        self.__order_status: OrderStatus = PendingStatus() 
+        self.__order_status: OrderStatus = OrderStatus.UNKNOWN # Initialize order_status with UNKNOWN as default
     
     @property
     def status(self) -> OrderStatus:
         return self.__order_status
 
-    def change_order_stats(self, new_status: OrderStatus):
+    def change_order_stats(self, new_status: OrderStatus) -> None: # Have to consider whether I want stict OrderStatus type or str
+        new_status = OrderStatus[]
         if not self.__order_status.can_transition_to(new_status):
             raise ValueError(f"Cannot go from {self.__order_status} to {new_status}")
+        self.__order_status = new_status
 
     def get_datetime(self) -> datetime:
         return self.__datetime
@@ -140,6 +142,7 @@ class Order:
     def get_purchased_items(self) -> dict():
         return MappingProxyType(self.__purchased_items)
 
+# -------------------- TEMP ENTRY POINT -------------------- # 
 def main():
     # start function
     name = "Soda"
