@@ -95,13 +95,15 @@ class Receipt:
 # -------------------- ORDER ENTITY -------------------- #
 
 class OrderStatus(Enum):
-    DEFAULT = "DEFAULT" # not sure if i need this
-    PENDING_PAYMENT = "PENDING_PAYMENT"
-    PAID = "PAID"
-    SHIPPED = "SHIPPED"
-    CANCELLED = "CANCELLED" 
-    REFUNDED = "REFUNDED"
-    DELIVERED = "DELIVERED"
+    DEFAULT =               "DEFAULT"   # not sure if i need this
+    PROCESSING_PAYMENT =    "PROCESSING_PAYMENT"
+    FAILED_PAYMENT =        "FAILED_PAYMENT"
+    PAID =                  "PAID"
+    PENDING_SHIPPING =      "PENDING_SHIPPING"
+    SHIPPED =               "SHIPPED"
+    DELIVERED =             "DELIVERED"
+    CANCELLED =             "CANCELLED" # can only be reached prior to payment being completed 
+    REFUNDED =              "REFUNDED"  # can only be reached after payment has been made
 
 # Havn't considered if customer is paying but cart ran out of certain products.
 class OrderStatePolicy:
