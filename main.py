@@ -118,6 +118,10 @@ class OrderStatePolicy:
             OrderStatus.REFUNDED:               set()
             }
 
+    @classmethod
+    def can_transition_to(cls, current: OrderStatus, new: OrderStatus) -> bool:
+        return new in cls._allowed.get(current, set())
+
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
@@ -126,15 +130,15 @@ class Order:
         self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
         self.__datetime = datetime.now()
-        self.__order_status: OrderStatus = OrderStatus.UNKNOWN # Initialize order_status with UNKNOWN as default
+        self.__order_status: OrderStatus = OrderStatus.DEFAULT # Initialize order_status with UNKNOWN as default
     
     @property
     def status(self) -> OrderStatus:
         return self.__order_status
 
     def change_order_stats(self, new_status: OrderStatus) -> None: # Have to consider whether I want stict OrderStatus type or str
-        new_status = OrderStatus[]
-        if not self.__order_status.can_transition_to(new_status):
+        # new_status = OrderStatus[] # not sure if i need this
+        if not OrderStatePolicy.can_transition_to(self.__order_status, new_status):
             raise ValueError(f"Cannot go from {self.__order_status} to {new_status}")
         self.__order_status = new_status
 
@@ -147,16 +151,6 @@ class Order:
 # -------------------- TEMP ENTRY POINT -------------------- # 
 def main():
     # start function
-    name = "Soda"
-    price = 12.01
-
-
-    item1 = GenerateProducts()
-    item1 = GenerateProducts.generate_product_object(name,price)
-    print('item1: ', item1.get_name(), item1.get_price())
-
-    item2 = GenerateProducts.generate_product_object(12.01, 12.01)
-    item3 = GenerateProducts.generate_product_object("Rice", "Rice")
 
 if __name__ = __main__:
     main()
