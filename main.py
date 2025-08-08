@@ -5,7 +5,8 @@
 from collections import defaultdict
 from types import MappingProxyType
 from datetime import datetime
-from enum import Enum 
+from enum import Enum
+from abc import ABC, abstractmethod
 import uuid 
 
 # -------------------- UTILITIES -------------------- #
@@ -23,6 +24,20 @@ class Validator:
         return in_cart_qty >= qty_to_remove
 
 # -------------------- Product Entity -------------------- #
+class ProductRepository(ABC):
+    # product database interface
+    @abstractmethod
+    def get_by_id(self, product_id: int) -> Optional[product]:
+        pass
+
+    @abstractmethod
+    def add(self, product:Product) -> None:
+        pass 
+
+    @abstractmethod
+    def list_all(self) -> List[Product]:
+        pass
+
 class Products:
     def __init__(self, name:str, price:float):
         self.__id = 0 # placeholder until import uuid package
@@ -119,7 +134,7 @@ class OrderStatus(Enum):
 # Havn't considered if customer is paying but cart ran out of certain products.
 class OrderStatusPolicy:
     _allowed = {
-            OrderStatus.DEFAULT:                {OrderStatus.PROCESSING_PAYMENT}
+            OrderStatus.DEFAULT:                {OrderStatus.PROCESSING_PAYMENT} # Dont need to allow CANCELLED since write to repo wont happen at this point.
             OrderStatus.PROCESSING_PAYMENT:     {OrderStatus.FAILED_PAYMENT, OrderStatus.PAID, OrderStatus.CANCELLED},
             OrderStatus.FAILED_PAYMENT:         {OrderStatus.PROCESSING_PAYMENT, OrderStatus.CANCELLED},
             OrderStatus.PAID:                   {OrderStatus.PENDING_SHIPPING, OrderStatus.REFUNDED}, 
@@ -137,7 +152,7 @@ class OrderStatusPolicy:
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
-    def __init__(self, cart_snapshot: MappingProxyType): # have to check if cart is dict() or dict(int)
+    def __init__(self, cart_snapshot: dict()): # have to check if cart is dict() or dict(int)
         self.__order_id = uuid.uuid4()
         self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
@@ -163,23 +178,38 @@ class Order:
 # --------------- OTHERS --------------- #
 
 class PaymentService:
+    # third party service 
+    # did payment go through yes or no?
+    # payment service should know the total and order_id how about products?
     pass
+
+class Reservation:
+    def __init__(self):
+        self.__id = uuid.uuid4()
+    
+    @property
+    def reservation_id(self) -> uuid:
+        return self.__id
+
 
 # purpose that holds the items from the import debugpy, platform
 class ProductReservationService:
     '''
         SRP: handles the reserve, release, commit status of products
     '''
-    def __init__(self):
+    def __init__(self, time_to_live_exiration_time: int, product_repo: ProductRepository): # not sure if I want to pass in ttl during app build, or pass it in later.
         pass
 
-    def reserve(self):
-        pass
+    def reserve(self, cart):
+        # Check if all products could be reserved 
+        # if yes, 
+        return Reservation.reservation_id # it should initialize the object with uuid and return the uuid 
 
     def release(self):
         pass
 
     def commit(self):
+        # should persist the inventory changes
         pass 
 
 # 
@@ -195,16 +225,39 @@ class CheckoutService:
     '''
     # concept - dependecy injection : constructor injection 
     # the services are infrastrure dependencies
-    def __init__(self, reservation_service:ProductReservationService, payment_service:PaymentService, order_repo:OrderRepository):
+    def __init__(
+            self,
+            reservation_service:ProductReservationService,
+            payment_service:PaymentService,
+            order_repo:OrderRepository,
+        ):
         self.__reservation_service = reservation_service
         self.__payment_service = payment_service
         self.__order_repo = order_repo
 
-    def checkout(self, cart, customer_id):
+    def checkout(self, cart, customer_info):
         # validate cart, snapshot items/total_cost_of_cart
         # reserve -> create order -> pay -> commit/release -> update status 
 
+        # to validate cart we need to check in the repository if the products exists
+        if !reservation_service.reserve(cart)): # temp solution forcing dict(cart)
+            raise Exception('Not all products could be reserved')
 
+        # then if exists we need to create an Order object
+        order = Order(dict(cart))
+        
+        # call PaymentService
+        order.change_order_status(PROCESSING_PAYMENT)
+
+        if !payment_service.process_payment(customer_info):
+            order.change_order_status(FAILED_PAYMENT)
+            raise Exception('Payment not successful.')
+
+        order.change_order_status(PAID)
+        reservation_service.commit(__reservation_service.reservation_id) # temp solution where do I store the temp reservation 
+        order.change_order_status(PENDING_SHIPPING)
+        # FUTURE ENHANCEMENT - NotificationService to send email with receipt 
+        # done
 
 
 
