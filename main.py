@@ -96,6 +96,14 @@ class Receipt:
         return lines
 
 # -------------------- ORDER ENTITY -------------------- #
+class OrderRepository:
+    # TEMP IN MEMORY REPO FOR ORDER CRUD
+    pass 
+
+class OrderDTO:
+    # map from repo -> service 
+    pass 
+
 
 class OrderStatus(Enum):
     DRAFT =                 "DRAFT"   # not sure if i need this
@@ -152,12 +160,27 @@ class Order:
     def get_purchased_items(self) -> dict():
         return dict(self.__purchased_items)
 
-# purpose that holds the items from the db 
+# --------------- OTHERS --------------- #
+
+class PaymentService:
+    pass
+
+# purpose that holds the items from the import debugpy, platform
 class ProductReservationService:
     '''
         SRP: handles the reserve, release, commit status of products
     '''
-    pass
+    def __init__(self):
+        pass
+
+    def reserve(self):
+        pass
+
+    def release(self):
+        pass
+
+    def commit(self):
+        pass 
 
 # 
 class CheckoutService:
@@ -170,7 +193,16 @@ class CheckoutService:
         - changes orderstatus to payment 
         - calls method to process payment 
     '''
-    pass 
+    # concept - dependecy injection : constructor injection 
+    # the services are infrastrure dependencies
+    def __init__(self, reservation_service:ProductReservationService, payment_service:PaymentService, order_repo:OrderRepository):
+        self.__reservation_service = reservation_service
+        self.__payment_service = payment_service
+        self.__order_repo = order_repo
+
+    def checkout(self, cart, customer_id):
+        # validate cart, snapshot items/total_cost_of_cart
+        # reserve -> create order -> pay -> commit/release -> update status 
 
 
 
