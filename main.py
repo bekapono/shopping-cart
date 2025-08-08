@@ -36,6 +36,8 @@ class Products:
     def get_price(self) -> float:
         return self.__price # float is immutable for python
 
+# This Factory Method seems more useful as a FRONT-END def.
+# rather than a def for the BACK-END.
 class GenerateProductsObject:
     @staticmethod
     def generate_product_object(user_input_name:any, user_input_price:any) -> Products:
@@ -94,6 +96,14 @@ class Receipt:
         return lines
 
 # -------------------- ORDER ENTITY -------------------- #
+class OrderRepository:
+    # TEMP IN MEMORY REPO FOR ORDER CRUD
+    pass 
+
+class OrderDTO:
+    # map from repo -> service 
+    pass 
+
 
 class OrderStatus(Enum):
     DRAFT =                 "DRAFT"   # not sure if i need this
@@ -127,7 +137,7 @@ class OrderStatusPolicy:
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
-    def __init__(self, cart_snapshot: MappingProxyType: # have to check if cart is dict() or dict(int)
+    def __init__(self, cart_snapshot: MappingProxyType): # have to check if cart is dict() or dict(int)
         self.__order_id = uuid.uuid4()
         self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
@@ -148,7 +158,55 @@ class Order:
         return self.__datetime
 
     def get_purchased_items(self) -> dict():
-        return MappingProxyType(self.__purchased_items)
+        return dict(self.__purchased_items)
+
+# --------------- OTHERS --------------- #
+
+class PaymentService:
+    pass
+
+# purpose that holds the items from the import debugpy, platform
+class ProductReservationService:
+    '''
+        SRP: handles the reserve, release, commit status of products
+    '''
+    def __init__(self):
+        pass
+
+    def reserve(self):
+        pass
+
+    def release(self):
+        pass
+
+    def commit(self):
+        pass 
+
+# 
+class CheckoutService:
+    '''
+        SRP: handles the process from requesting to purchase to delivered.
+        - is the binding method between cart <-> order.
+        - receive the cart and persists it to a dict()
+        - creates and Order object and passes cart_dict
+        - checks and reserve products
+        - changes orderstatus to payment 
+        - calls method to process payment 
+    '''
+    # concept - dependecy injection : constructor injection 
+    # the services are infrastrure dependencies
+    def __init__(self, reservation_service:ProductReservationService, payment_service:PaymentService, order_repo:OrderRepository):
+        self.__reservation_service = reservation_service
+        self.__payment_service = payment_service
+        self.__order_repo = order_repo
+
+    def checkout(self, cart, customer_id):
+        # validate cart, snapshot items/total_cost_of_cart
+        # reserve -> create order -> pay -> commit/release -> update status 
+
+
+
+
 
 # -------------------- TEMP ENTRY POINT -------------------- # 
 def main():
