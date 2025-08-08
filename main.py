@@ -5,6 +5,7 @@
 from collections import defaultdict
 from types import MappingProxyType
 from datetime import datetime
+from enum import Enum 
 import uuid 
 
 # -------------------- UTILITIES -------------------- #
@@ -52,16 +53,16 @@ class GenerateProductsObject:
 # -------------------- CART ENTITY -------------------- #
 class Cart:
     def __init__(self):
-        self.__cart_id = 0
+        self.__cart_id = uuid.uuid4()
         self.__cart = defaultdict(int)
 
     def get_cart(self) -> MappingProxyType: # Creates a read only view of map.
         return MappingProxyType(self.__cart)
 
-    def add_to_cart(self, product:Product, qty:int):
+    def add_to_cart(self, product:Products, qty:int):
         self.__cart[product] += qty
 
-    def remove_from_cart(self, product:Product, qty:int):
+    def remove_from_cart(self, product:Products, qty:int):
         if Validator.valid_qty_to_remove(self.__cart[product], qty):
             raise Exception('Invalid quantity amount.')
         self.__cart[product] -= qty
@@ -126,7 +127,7 @@ class OrderStatusPolicy:
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
-    def __init__(self, cart: dict()): # have to check if cart is dict() or dict(int)
+    def __init__(self, cart_snapshot: MappingProxyType: # have to check if cart is dict() or dict(int)
         self.__order_id = uuid.uuid4()
         self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
@@ -151,7 +152,12 @@ class Order:
 
 # -------------------- TEMP ENTRY POINT -------------------- # 
 def main():
-    # start function
+    # 1. Create products
+    # 2. Add products to cart
+    # 3. Display cart
+    # 4. checkout
+    # 5. Simulation
+    # 6. Print receipt
 
-if __name__ = __main__:
+if __name__ = "__main__":
     main()
