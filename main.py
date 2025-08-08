@@ -36,6 +36,8 @@ class Products:
     def get_price(self) -> float:
         return self.__price # float is immutable for python
 
+# This Factory Method seems more useful as a FRONT-END def.
+# rather than a def for the BACK-END.
 class GenerateProductsObject:
     @staticmethod
     def generate_product_object(user_input_name:any, user_input_price:any) -> Products:
@@ -127,7 +129,7 @@ class OrderStatusPolicy:
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
-    def __init__(self, cart_snapshot: MappingProxyType: # have to check if cart is dict() or dict(int)
+    def __init__(self, cart_snapshot: MappingProxyType): # have to check if cart is dict() or dict(int)
         self.__order_id = uuid.uuid4()
         self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
@@ -148,7 +150,31 @@ class Order:
         return self.__datetime
 
     def get_purchased_items(self) -> dict():
-        return MappingProxyType(self.__purchased_items)
+        return dict(self.__purchased_items)
+
+# purpose that holds the items from the db 
+class ProductReservationService:
+    '''
+        SRP: handles the reserve, release, commit status of products
+    '''
+    pass
+
+# 
+class CheckoutService:
+    '''
+        SRP: handles the process from requesting to purchase to delivered.
+        - is the binding method between cart <-> order.
+        - receive the cart and persists it to a dict()
+        - creates and Order object and passes cart_dict
+        - checks and reserve products
+        - changes orderstatus to payment 
+        - calls method to process payment 
+    '''
+    pass 
+
+
+
+
 
 # -------------------- TEMP ENTRY POINT -------------------- # 
 def main():
