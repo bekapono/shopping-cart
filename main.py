@@ -5,7 +5,7 @@
 from collections import defaultdict
 from types import MappingProxyType
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Protocol
 from enum import Enum
 from abc import ABC, abstractmethod
 import uuid 
@@ -21,16 +21,26 @@ class Validator:
         return isinstance(input,float)
 
     @staticmethod
-    def valid_qty_to_remove(in_cart_qty:int, qty_to_remove:int) -> bool:
+    def invalid_qty_to_remove(in_cart_qty:int, qty_to_remove:int) -> bool:
         return in_cart_qty < qty_to_remove
 
 # -------------------- Product Entity -------------------- #
+'''
+        Need to look up freezing class state so fields are immutable.
+        Also added __eq__ and __hash__ for for comparison check and hash tables have to match 
+        - products class is going to be a temp class that will be deleted later, since This
+        should really be a repo. with a paired up ProductsService to communicate with it.
+'''
 class Products:
     def __init__(self, name:str, price:float):
         self.__id = uuid.uuid4() # placeholder until import uuid package
         self.__name = name 
         self.__price = price 
         # for now i'll just be working with product name and price.
+    
+    @property 
+    def id(self) -> uuid.UUID:
+        return self.__id 
 
     @property 
     def name(self) -> str:
@@ -40,10 +50,19 @@ class Products:
     def price(self) -> float:
         return self.__price # float is immutable for python
 
+    # Equality & hash based only on immutable id 
+    def __eq__(self, other):
+        if not isinstance(other, Products):
+            return NotImplmented
+        return self.__id == other.__id
+
+    def __hash__(self):
+        return hash(self.__id)
+
 class ProductRepository(ABC):
 
     @abstractmethod
-    def get_by_id(self, product_id:int) -> Optional[Products]:
+    def get_by_id(self, product_id:uuid) -> Optional[Products]:
         pass
 
     @abstractmethod
@@ -83,7 +102,7 @@ class Cart:
         self.__cart[product] += qty
 
     def remove_from_cart(self, product:Products, qty:int):
-        if Validator.valid_qty_to_remove(self.__cart[product], qty):
+        if Validator.invalid_qty_to_remove(self.__cart[product], qty):
             raise Exception('Invalid quantity amount.')
         self.__cart[product] -= qty
 
@@ -94,7 +113,7 @@ class CalculateCart:
     @property
     def total_cost(self):
         __total = 0 
-        for product in self.__cart:
+        for product, qty in self.__cart.items():
             __total += self.__cart[product].price * self.__cart[product].qty
 
         return __total
@@ -103,7 +122,7 @@ class Receipt:
     def __init__(self, cart:Cart):
         self.__cart = cart
 
-    def format_recipt(self) -> List[str]:
+    def format_receipt(self) -> List[str]:
         lines = []
         total_cost_of_cart = 0
         for product,qty in self.__cart.items():
@@ -137,7 +156,7 @@ class OrderStatus(Enum):
 # Havn't considered if customer is paying but cart ran out of certain products.
 class OrderStatusPolicy:
     _allowed = {
-            OrderStatus.DRAFT:                {OrderStatus.PROCESSING_PAYMENT} # Dont need to allow CANCELLED since write to repo wont happen at this point.
+            OrderStatus.DRAFT:                {OrderStatus.PROCESSING_PAYMENT}, # Dont need to allow CANCELLED since write to repo wont happen at this point.
             OrderStatus.PROCESSING_PAYMENT:     {OrderStatus.FAILED_PAYMENT, OrderStatus.PAID, OrderStatus.CANCELLED},
             OrderStatus.FAILED_PAYMENT:         {OrderStatus.PROCESSING_PAYMENT, OrderStatus.CANCELLED},
             OrderStatus.PAID:                   {OrderStatus.PENDING_SHIPPING, OrderStatus.REFUNDED}, 
@@ -155,7 +174,7 @@ class OrderStatusPolicy:
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
-    def __init__(self, cart_snapshot: Dict[Products, int]: # have to check if cart is dict() or dict(int)
+    def __init__(self, cart_snapshot: Dict[Products, int]): # have to check if cart is dict() or dict(int)
         self.__order_id = uuid.uuid4()
         self.__customer_id = uuid.uuid4()
         self.__purchased_items = cart_snapshot # the Cart object that was passed should be an immutable snapshot of the Order
@@ -243,22 +262,22 @@ class CheckoutService:
         # reserve -> create order -> pay -> commit/release -> update status 
 
         # to validate cart we need to check in the repository if the products exists
-        if not self.reservation_service.reserve(cart)): # temp solution forcing dict(cart)
+        if not self.__reservation_service.reserve(cart): # temp solution forcing dict(cart)
             raise Exception('Not all products could be reserved')
 
         # then if exists we need to create an Order object
         order = Order(dict(cart))
         
         # call PaymentService
-        order.change_order_status(PROCESSING_PAYMENT)
+        order.change_order_status(OrderStatus.PROCESSING_PAYMENT)
 
         if not self.payment_service.process_payment(customer_info):
             order.change_order_status(FAILED_PAYMENT)
             raise Exception('Payment not successful.')
 
-        order.change_order_status(PAID)
-        self.reservation_service.commit(__reservation_service.reservation_id) # temp solution where do I store the temp reservation 
-        order.change_order_status(PENDING_SHIPPING)
+        order.change_order_status(OrderStatus.PAID)
+        self.__reservation_service.commit(self.__reservation_service.reservation_id) # temp solution where do I store the temp reservation 
+        order.change_order_status(OrderStatus.PENDING_SHIPPING)
         # FUTURE ENHANCEMENT - NotificationService to send email with receipt 
         # done
 
