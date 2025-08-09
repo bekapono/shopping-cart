@@ -5,6 +5,7 @@
 from collections import defaultdict
 from types import MappingProxyType
 from datetime import datetime
+from typing import Optional
 from enum import Enum
 from abc import ABC, abstractmethod
 import uuid 
@@ -21,35 +22,37 @@ class Validator:
 
     @staticmethod
     def valid_qty_to_remove(in_cart_qty:int, qty_to_remove:int) -> bool:
-        return in_cart_qty >= qty_to_remove
+        return in_cart_qty < qty_to_remove
 
 # -------------------- Product Entity -------------------- #
-class ProductRepository(ABC):
-    # product database interface
-    @abstractmethod
-    def get_by_id(self, product_id: int) -> Optional[product]:
-        pass
-
-    @abstractmethod
-    def add(self, product:Product) -> None:
-        pass 
-
-    @abstractmethod
-    def list_all(self) -> List[Product]:
-        pass
-
 class Products:
     def __init__(self, name:str, price:float):
-        self.__id = 0 # placeholder until import uuid package
+        self.__id = uuid.uuid4() # placeholder until import uuid package
         self.__name = name 
         self.__price = price 
         # for now i'll just be working with product name and price.
 
-    def get_name(self) -> str:
+    @property 
+    def name(self) -> str:
         return self.__name # strings is immutable for python
-
-    def get_price(self) -> float:
+     
+    @property
+    def price(self) -> float:
         return self.__price # float is immutable for python
+
+class ProductRepository(ABC):
+
+    @abstractmethod
+    def get_by_id(self, product_id:int) -> Optional[Products]:
+        pass
+
+    @abstractmethod
+    def add(self, product:Products) -> None:
+        pass
+
+    @abstractmethod
+    def list_all(self) -> List[Products]:
+        pass
 
 # This Factory Method seems more useful as a FRONT-END def.
 # rather than a def for the BACK-END.
@@ -91,8 +94,8 @@ class CalculateCart:
     @property
     def total_cost(self):
         __total = 0 
-        for product in self.cart:
-            __total += self.cart[product]
+        for product in self.__cart:
+            __total += self.__cart[product].price * self.__cart[product].qty
 
         return __total
 
@@ -103,7 +106,7 @@ class Receipt:
     def format_recipt(self) -> List[str]:
         lines = []
         total_cost_of_cart = 0
-        for product,qty in self.__cart:
+        for product,qty in self.__cart.items():
             total_cost_for_product = product.get_price() * qty
             lines.append(f"{product.get_name()}: {qty} x ${product.get_price():.2f} = ${total_cost_for_product:.2f}")
             total_cost_of_cart += total_cost_for_product
@@ -134,7 +137,7 @@ class OrderStatus(Enum):
 # Havn't considered if customer is paying but cart ran out of certain products.
 class OrderStatusPolicy:
     _allowed = {
-            OrderStatus.DEFAULT:                {OrderStatus.PROCESSING_PAYMENT} # Dont need to allow CANCELLED since write to repo wont happen at this point.
+            OrderStatus.DRAFT:                {OrderStatus.PROCESSING_PAYMENT} # Dont need to allow CANCELLED since write to repo wont happen at this point.
             OrderStatus.PROCESSING_PAYMENT:     {OrderStatus.FAILED_PAYMENT, OrderStatus.PAID, OrderStatus.CANCELLED},
             OrderStatus.FAILED_PAYMENT:         {OrderStatus.PROCESSING_PAYMENT, OrderStatus.CANCELLED},
             OrderStatus.PAID:                   {OrderStatus.PENDING_SHIPPING, OrderStatus.REFUNDED}, 
@@ -152,10 +155,10 @@ class OrderStatusPolicy:
 # need to consider when a Cart is finalized and Order is created?
 # once a user clicks checkout? - once a payment is initiated? 
 class Order:
-    def __init__(self, cart_snapshot: dict()): # have to check if cart is dict() or dict(int)
+    def __init__(self, cart_snapshot: Dict[Products, int]: # have to check if cart is dict() or dict(int)
         self.__order_id = uuid.uuid4()
         self.__customer_id = uuid.uuid4()
-        self.__purchased_items = cart # the Cart object that was passed should be an immutable snapshot of the Order
+        self.__purchased_items = cart_snapshot # the Cart object that was passed should be an immutable snapshot of the Order
         self.__datetime = datetime.now()
         self.__order_status: OrderStatus = OrderStatus.DRAFT # Initialize order_status with UNKNOWN as default
     
@@ -165,7 +168,7 @@ class Order:
 
     def change_order_status(self, new_status: OrderStatus) -> None: # Have to consider whether I want stict OrderStatus type or str
         # new_status = OrderStatus[] # not sure if i need this
-        if not OrderStatePolicy.can_transition_to(self.__order_status, new_status):
+        if not OrderStatusPolicy.can_transition_to(self.__order_status, new_status):
             raise ValueError(f"Cannot go from {self.__order_status} to {new_status}")
         self.__order_status = new_status
 
@@ -210,9 +213,9 @@ class ProductReservationService:
 
     def commit(self):
         # should persist the inventory changes
-        pass 
+        pass
 
-# 
+ 
 class CheckoutService:
     '''
         SRP: handles the process from requesting to purchase to delivered.
@@ -240,7 +243,7 @@ class CheckoutService:
         # reserve -> create order -> pay -> commit/release -> update status 
 
         # to validate cart we need to check in the repository if the products exists
-        if !reservation_service.reserve(cart)): # temp solution forcing dict(cart)
+        if not self.reservation_service.reserve(cart)): # temp solution forcing dict(cart)
             raise Exception('Not all products could be reserved')
 
         # then if exists we need to create an Order object
@@ -249,12 +252,12 @@ class CheckoutService:
         # call PaymentService
         order.change_order_status(PROCESSING_PAYMENT)
 
-        if !payment_service.process_payment(customer_info):
+        if not self.payment_service.process_payment(customer_info):
             order.change_order_status(FAILED_PAYMENT)
             raise Exception('Payment not successful.')
 
         order.change_order_status(PAID)
-        reservation_service.commit(__reservation_service.reservation_id) # temp solution where do I store the temp reservation 
+        self.reservation_service.commit(__reservation_service.reservation_id) # temp solution where do I store the temp reservation 
         order.change_order_status(PENDING_SHIPPING)
         # FUTURE ENHANCEMENT - NotificationService to send email with receipt 
         # done
@@ -270,5 +273,5 @@ def main():
     # 5. Simulation
     # 6. Print receipt
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     main()
